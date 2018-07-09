@@ -65,18 +65,19 @@ def fwhm(acfx):
 
     try:
         #(popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), [0.5, 2, 2])
-        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,1000000,1000000]))
+        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,1000000000,1000000000]))
     except RuntimeError:
         # try again with limited length of the ACF
         xprime = np.linspace(0,0.20*max(xdata),num=200)
         try:
             #(popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), [0.5, 2, 2])
             (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2], bounds=(0,[1,1000000000,1000000000]))
-        except:
+        except RuntimeError:
             error=1
             popt=[]
     
-    if error==0:
+    # if fitting was successful, use the fit, otherwise use the the original acf (interpolated) to find root (i.e., fwhm)
+    if error==0: 
         f_halfmaxshifted = lambda x: ACF_halfmaxshifted(x,popt[0],popt[1],popt[2])
     else:
         f_halfmaxshifted = scipy.interpolate.interp1d(xdata,acfx-0.5, kind = "cubic")

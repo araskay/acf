@@ -1,3 +1,5 @@
+# Aditi's code
+
 #!/bin/bash
 #$-cwd
 #$ -o STD2_12072017.out
