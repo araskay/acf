@@ -44,7 +44,6 @@ def ACF_halfmaxshifted(x,a,b,c):
 #         fwhm_pix: FWHM in pixels
 #         popt: ACF function (defined above) parameters
 def fwhm(acfx):
-    
     # use the following value if error in finding root encountered
     errorfwhm=50
 
@@ -57,7 +56,7 @@ def fwhm(acfx):
     acfx = acfx[np.argmax(acfx):-1]
     
     xdata = np.arange(len(acfx))
-    
+  
     # interpolate before curve fitting
     f = scipy.interpolate.interp1d(xdata,acfx, kind = "cubic")
     
@@ -65,13 +64,13 @@ def fwhm(acfx):
 
     try:
         #(popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), [0.5, 2, 2])
-        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,1000000000,1000000000]))
+        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,1e32,1e32]))
     except RuntimeError:
         # try again with limited length of the ACF
         xprime = np.linspace(0,0.20*max(xdata),num=200)
         try:
             #(popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), [0.5, 2, 2])
-            (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2], bounds=(0,[1,1000000000,1000000000]))
+            (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2], bounds=(0,[1,1e32,1e32]))
         except RuntimeError:
             error=1
             popt=[]
@@ -79,6 +78,7 @@ def fwhm(acfx):
     # if fitting was successful, use the fit, otherwise use the the original acf (interpolated) to find root (i.e., fwhm)
     if error==0: 
         f_halfmaxshifted = lambda x: ACF_halfmaxshifted(x,popt[0],popt[1],popt[2])
+        
     else:
         f_halfmaxshifted = scipy.interpolate.interp1d(xdata,acfx-0.5, kind = "cubic")
     
@@ -90,63 +90,37 @@ def fwhm(acfx):
             fwhm_pix = 2 * optimization.brentq(f_halfmaxshifted,0,len(acfx))
         else:
             error = 2
-            return (errorfwhm, popt, error)
-
-    return (fwhm_pix, popt, error)
-
-
-# the following function copied from Aditi's script. Used only for plotting
-        # for comparison
-###############################################################################   
-# Description - This function takes in a 1D ACF cross-section vector, fits a 
-    # weighted univariate spline, and calculates the FWHM
-# Args - 1D vector (ACF cross-section),
-# Returns - FWHM value in pixels
-############################################################################### 
-def aditi_fwhm(y):
-    a=0.0
-    b=15.0
-    y = y[int(len(y)/2):]
-    x = np.linspace(0,len(y)-1,len(y))
-    w = np.ones(len(x))
-    w[0:3]=[4.0,3.0,2.0]
+            return (errorfwhm, popt, error, f)
     
-    interp = scipy.interpolate.UnivariateSpline(x,y-np.max(y)/2,s=0.0,k=5.0,w=w)
-    
-    ### if it does not go below zero, return large number
-    if any(n<0 for n in (y-np.max(y)/2)) == False:
-        return len(x)*4.0, interp
-    ### find first negative value to assign to value 'b'
-    b = next((i for i, v in enumerate(interp(x)) if v < 0.0), 15.0)
-    roots = scipy.optimize.brentq(interp,a,b)
-    return (roots*2.0)/np.sqrt(2.0), interp
+    return (fwhm_pix, popt, error, f)
+
 
 # save raw, interpolated, and fitted (if available) ACF upon error
-def save_acf(acfx,img,filename):
+def save_acf(acfx,filename):
+    ## plot ACFs
+    # normalize acf to [0,1]
+    acfx = acfx/max(acfx)
+    
+    # crop the right side only
+    acfx = acfx[np.argmax(acfx):-1]
+    xdata = np.arange(len(acfx))
+    
     plt.figure(10)
+    plt.plot(xdata,acfx)
     
-    # plot original acf
-    plt.plot(acfx[int(img.shape[0]/2):-1]/max(acfx))
+    xnew = np.linspace(0,max(xdata),num=1000)
     
-    x = np.linspace(0,img.shape[0]/2,num=10000)
+    plt.figure(10)
+    plt.plot(xnew,f(xnew))
     
-    # plot AFNI model (Gaussian plus exponential)
-    (fwhmx_pix, poptx, error) = fwhm(acfx)
-    if error!=1:
-        y = ACF(x,poptx[0],poptx[1],poptx[2])
-        plt.plot(x,y)
+    if error!= 1:
+        plt.figure(10)
+        plt.plot(xnew,ACF(xnew,popt[0],popt[1],popt[2]))  
     
-    # plot Aditi's model (spline interpolation)
-    fwhmx_pix_compare, interp_compare = aditi_fwhm(acfx)
-    y=interp_compare(x)
-    plt.plot(x,y/max(y)/2+0.5)
-    
-    plt.title('ACF')
-    
-    if error!=1:
-        plt.legend(['Original','AFNI model', 'Spline interpolate'])
+    if error == 1:
+        plt.legend(['Original','Interpolated'])
     else:
-        plt.legend(['Original', 'Spline interpolate'])
+        plt.legend(['Original','Interpolated','AFNI model'])
     
     plt.figure(10)
     plt.savefig(filename)
@@ -170,6 +144,7 @@ for (opt,arg) in opts:
         n_discard=int(arg)
     elif opt in ('-h','--help'):
         printhelp()
+        sys.exit()
         
 if fmri_file=='':
     printhelp()
@@ -199,65 +174,85 @@ img_nib=nb.load(fmri_file)
 img=img_nib.get_data()
 pixdim = img_nib.header.get_zooms()
 
-# find time to equillibrium
 sl_fwhmx = np.zeros((img.shape[2],img.shape[3]))
 sl_fwhmy = np.zeros((img.shape[2],img.shape[3]))
+
 for t in np.arange(img.shape[3]):
     for z in np.arange(img.shape[2]):
         sl=img[:,:,z,t]
         # calculate 2D ACF
         acf = acf2d(sl)
+
         # calculate FWHMx
         acfx = abs(acf[int(sl.shape[0]/2),])
-        (fwhmx_pix, poptx, error) = fwhm(acfx)
-        sl_fwhmx[z,t] = fwhmx_pix * pixdim[0]    
+        (fwhmx_pix, popt, error,f) = fwhm(acfx)
+        sl_fwhmx[z,t] = fwhmx_pix * pixdim[0]
+        
+        ## plot ACFs
+        if t >= n_discard:
+            # normalize acf to [0,1]
+            acfx = acfx/max(acfx)
+            # crop the right side only
+            acfx = acfx[np.argmax(acfx):-1]
+            xdata = np.arange(len(acfx))
+            
+            #plt.figure(11)
+            #plt.plot(xdata,acfx)
+            
+            xnew = np.linspace(0,max(xdata),num=10000)
+            
+            plt.figure(12)
+            plt.plot(xnew,f(xnew))
+            
+            if error!= 1:
+                plt.figure(13)
+                plt.plot(xnew,ACF(xnew,popt[0],popt[1],popt[2]))  
+
+        # record errors
+        if error != 0:
+            errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMx) \n')
+            save_acf(acfx,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFx.png')
+        
         # calculate FWHMy
-        acfy = abs(acf[:,int(sl.shape[1]/2)])
-        (fwhmy_pix, popty, error) = fwhm(acfy)
-        sl_fwhmy[z,t] = fwhmy_pix * pixdim[1]
+        acfx = abs(acf[:,int(sl.shape[1]/2)])
+        (fwhmx_pix, popt, error,f) = fwhm(acfx)
+        sl_fwhmy[z,t] = fwhmx_pix * pixdim[1]
+        
+        ## plot ACFs
+        if t >= n_discard:
+            # normalize acf to [0,1]
+            acfx = acfx/max(acfx)
+            # crop the right side only
+            acfx = acfx[np.argmax(acfx):-1]
+            xdata = np.arange(len(acfx))
+            
+            #plt.figure(21)
+            #plt.plot(xdata,acfx)
+            
+            xnew = np.linspace(0,max(xdata),num=10000)
+            
+            plt.figure(22)
+            plt.plot(xnew,f(xnew))
+            
+            if error!= 1:
+                plt.figure(23)
+                plt.plot(xnew,ACF(xnew,popt[0],popt[1],popt[2]))          
+        
+        # record errors
+        if error != 0:
+            errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMy) \n')
+            save_acf(acfx,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFy.png')  
+
+
+# find time to equillibrium
 # find t s.t. max(t:) == max(t+1:)
 max_sl_fwhmx = np.amax(sl_fwhmx,axis=0)
 max_sl_fwhmy = np.amax(sl_fwhmy,axis=0)
 t_eq=0
 while max(max_sl_fwhmx[t_eq:]) != max(max_sl_fwhmx[t_eq+1:]) and max(max_sl_fwhmy[t_eq:]) != max(max_sl_fwhmy[t_eq+1:]):
     t_eq+=1
-###################################
 
-sl_fwhmx = np.zeros((img.shape[2],img.shape[3]))
-sl_fwhmy = np.zeros((img.shape[2],img.shape[3]))
-
-for t in np.arange(n_discard,img.shape[3]):
-    for z in np.arange(img.shape[2]):
-        sl=img[:,:,z,t]
-        # calculate 2D ACF
-        acf = acf2d(sl)
-        # calculate FWHMx
-        acfx = abs(acf[int(sl.shape[0]/2),])
-        (fwhmx_pix, poptx, error) = fwhm(acfx)
-        sl_fwhmx[z,t] = fwhmx_pix * pixdim[0]
-        
-        if error == 0:
-            plt.figure(1)
-            x = np.linspace(0,img.shape[0]/2,num=10000)
-            y = ACF(x,poptx[0],poptx[1],poptx[2])
-            plt.plot(x,y)
-        else:
-            errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMx) \n')
-            save_acf(acfx,img,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFx.png')
-        
-        # calculate FWHMy
-        acfy = abs(acf[:,int(sl.shape[1]/2)])
-        (fwhmy_pix, popty, error) = fwhm(acfy)
-        sl_fwhmy[z,t] = fwhmy_pix * pixdim[1]
-        if error == 0:
-            plt.figure(2)
-            x = np.linspace(0,img.shape[1]/2,num=10000)
-            y = ACF(x,popty[0],popty[1],popty[2])
-            plt.plot(x,y)            
-        else:
-            errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMy) \n')
-            save_acf(acfy,img,fmri_file+' _t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFy.png')  
-
+# crop to n_discard
 sl_fwhmx = sl_fwhmx[:,n_discard:]
 sl_fwhmy = sl_fwhmy[:,n_discard:]
 
@@ -301,10 +296,14 @@ errorfile.close()
 csv_teq.close()
 
 # save figures
-plt.figure(1)
+plt.figure(12)
 plt.savefig(fmri_file+'_ACFx.png')
-plt.figure(2)
-plt.savefig(fmri_file+'_ACFy.png') 
+plt.figure(13)
+plt.savefig(fmri_file+'_ACFx_fit.png') 
+plt.figure(22)
+plt.savefig(fmri_file+'_ACFy.png')
+plt.figure(23)
+plt.savefig(fmri_file+'_ACFy_fit.png') 
 
 plt.figure(3)
 plt.plot(np.amax(sl_fwhmx,axis=0))
