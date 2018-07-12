@@ -127,18 +127,19 @@ def save_acf(acfx,filename):
     plt.close() 
 
 def printhelp():
-    print('Usage: acf.py -f <file name> [--ndiscard <n=0>]')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0>]')
+    print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')    
 
 fmri_file=''
 n_discard=0
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hf:',['file=', 'help', 'ndiscard='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard='])
 except getopt.GetoptError:
     sys.exit()
 for (opt,arg) in opts:
-    if opt in ('-f','--file'):
+    if opt in (--file'):
         fmri_file=arg
     elif opt in ('--ndiscard'):
         n_discard=int(arg)
