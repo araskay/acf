@@ -139,7 +139,7 @@ try:
 except getopt.GetoptError:
     sys.exit()
 for (opt,arg) in opts:
-    if opt in (--file'):
+    if opt in ('--file'):
         fmri_file=arg
     elif opt in ('--ndiscard'):
         n_discard=int(arg)

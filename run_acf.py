@@ -9,6 +9,7 @@ Created on Wed May 23 10:18:31 2018
 import workflow, getopt, sys, subprocess, fileutils, os
 
 def printhelp():
+    print('Usage: run_acf.py --subjects <subjects file> [acf.py additional arguments as listed below]')
     p=subprocess.Popen(['acf.py','-h'])
     p.communicate()
     print('---------------------------------')
@@ -24,7 +25,7 @@ ifile=''
 pipe_args = sys.argv[1:]
 for arg in pipe_args:
     if '--' in arg:
-        if not arg in ['--file','--ndiscard', '--help']:
+        if not arg in ['--subjects','--ndiscard', '--help', '--mem']:
             printhelp()
             sys.exit()
 
@@ -32,7 +33,7 @@ mem='16'
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['help','file=', 'ndiscard='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['help','subjects=', 'ndiscard=','mem='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -40,7 +41,7 @@ for (opt,arg) in opts:
     if opt in ('-h', '--help'):
         printhelp()
         sys.exit()
-    elif opt in ('--file'):
+    elif opt in ('--subjects'):
         ifile=arg
 
     elif opt in ('--mem'):
@@ -83,7 +84,10 @@ for subj in subjects:
             qbatch_file.write(base_command + ' ')
             #Just re-use the arguments given here
             pipe_args = sys.argv[1:]
-            pipe_args[pipe_args.index('--file')+1] = fileutils.addniigzext(run.data.bold)
+            pipe_args[pipe_args.index('--subjects')+1] = fileutils.addniigzext(run.data.bold)
+            pipe_args[pipe_args.index('--subjects')] = '--file'
+            del pipe_args[pipe_args.index('--mem')+1]
+            del pipe_args[pipe_args.index('--mem')]
             command_str  = ' '.join(pipe_args)
             qbatch_file.write(command_str)
             qbatch_file.write('\n')
