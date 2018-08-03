@@ -14,7 +14,7 @@ def printhelp():
     p.communicate()
     print('---------------------------------')
     print('Additional job scheduler options:')
-    print('--mem <amount in GB = 16>')
+    print('--mem <amount in GB = 32>')
 
 ifile=''
 
@@ -25,15 +25,15 @@ ifile=''
 pipe_args = sys.argv[1:]
 for arg in pipe_args:
     if '--' in arg:
-        if not arg in ['--subjects','--ndiscard', '--help', '--mem']:
+        if not arg in ['--subjects','--ndiscard', '--help', '--mem','--fit']:
             printhelp()
             sys.exit()
 
-mem='16'
+mem='32'
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['help','subjects=', 'ndiscard=','mem='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['help','subjects=', 'ndiscard=','mem=','fit'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -86,8 +86,9 @@ for subj in subjects:
             pipe_args = sys.argv[1:]
             pipe_args[pipe_args.index('--subjects')+1] = fileutils.addniigzext(run.data.bold)
             pipe_args[pipe_args.index('--subjects')] = '--file'
-            del pipe_args[pipe_args.index('--mem')+1]
-            del pipe_args[pipe_args.index('--mem')]
+            if '--mem' in pipe_args:
+                del pipe_args[pipe_args.index('--mem')+1]
+                del pipe_args[pipe_args.index('--mem')]
             command_str  = ' '.join(pipe_args)
             qbatch_file.write(command_str)
             qbatch_file.write('\n')

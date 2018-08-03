@@ -43,7 +43,7 @@ def ACF_halfmaxshifted(x,a,b,c):
 # output: (fwhm_pix, popt)
 #         fwhm_pix: FWHM in pixels
 #         popt: ACF function (defined above) parameters
-def fwhm(acfx):
+def fwhm(acfx,dofit):
     # use the following value if error in finding root encountered
     errorfwhm=50
 
@@ -63,20 +63,20 @@ def fwhm(acfx):
     xnew = np.linspace(0,max(xdata),num=1000)
 
     try:
-        #(popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), [0.5, 2, 2])
-        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,1e32,1e32]))
+        (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2])
+        #(popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,np.inf,np.inf]))
     except RuntimeError:
         # try again with limited length of the ACF
         xprime = np.linspace(0,0.20*max(xdata),num=200)
         try:
-            #(popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), [0.5, 2, 2])
-            (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2], bounds=(0,[1,1e32,1e32]))
+            (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2])
+            #(popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2], bounds=(0,[1,np.inf,np.inf]))
         except RuntimeError:
             error=1
             popt=[]
     
     # if fitting was successful, use the fit, otherwise use the the original acf (interpolated) to find root (i.e., fwhm)
-    if error==0: 
+    if dofit and error==0: 
         f_halfmaxshifted = lambda x: ACF_halfmaxshifted(x,popt[0],popt[1],popt[2])
         
     else:
@@ -86,8 +86,8 @@ def fwhm(acfx):
     if np.sign(f_halfmaxshifted(0)) * np.sign(f_halfmaxshifted(len(acfx)/2)) < 0:
         fwhm_pix = 2 * optimization.brentq(f_halfmaxshifted,0,len(acfx)/2)    
     else:
-        if np.sign(f_halfmaxshifted(0)) * np.sign(f_halfmaxshifted(len(acfx))) < 0:
-            fwhm_pix = 2 * optimization.brentq(f_halfmaxshifted,0,len(acfx))
+        if np.sign(f_halfmaxshifted(0)) * np.sign(f_halfmaxshifted(len(acfx)-1)) < 0:
+            fwhm_pix = 2 * optimization.brentq(f_halfmaxshifted,0,len(acfx)-1)
         else:
             error = 2
             return (errorfwhm, popt, error, f)
@@ -127,15 +127,16 @@ def save_acf(acfx,filename):
     plt.close() 
 
 def printhelp():
-    print('Usage: acf.py --file <file name> [--ndiscard <n=0>]')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit]')
     print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')    
 
 fmri_file=''
 n_discard=0
+dofit=False
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard=','fit'])
 except getopt.GetoptError:
     sys.exit()
 for (opt,arg) in opts:
@@ -143,6 +144,8 @@ for (opt,arg) in opts:
         fmri_file=arg
     elif opt in ('--ndiscard'):
         n_discard=int(arg)
+    elif opt in ('--fit'):
+        dofit=True
     elif opt in ('-h','--help'):
         printhelp()
         sys.exit()
@@ -186,7 +189,7 @@ for t in np.arange(img.shape[3]):
 
         # calculate FWHMx
         acfx = abs(acf[int(sl.shape[0]/2),])
-        (fwhmx_pix, popt, error,f) = fwhm(acfx)
+        (fwhmx_pix, popt, error,f) = fwhm(acfx,dofit)
         sl_fwhmx[z,t] = fwhmx_pix * pixdim[0]
         
         ## plot ACFs
@@ -216,7 +219,7 @@ for t in np.arange(img.shape[3]):
         
         # calculate FWHMy
         acfx = abs(acf[:,int(sl.shape[1]/2)])
-        (fwhmx_pix, popt, error,f) = fwhm(acfx)
+        (fwhmx_pix, popt, error,f) = fwhm(acfx,dofit)
         sl_fwhmy[z,t] = fwhmx_pix * pixdim[1]
         
         ## plot ACFs
