@@ -11,6 +11,7 @@ import nibabel as nb
 import scipy.optimize as optimization
 import scipy.interpolate, scipy.stats as ss
 import getopt,sys
+import fileutils
 
 # the following two lines used to avoid envoking x display
 import matplotlib
@@ -50,7 +51,8 @@ def fwhm(acfx,dofit):
     error=0 # 0: no error, 1: error in fitting, 2: error in finding root
     
     # normalize acf to [0,1]
-    acfx = acfx/max(acfx)
+    if max(acfx)>0:
+        acfx = acfx/max(acfx)
     
     # crop the right side only
     acfx = acfx[np.argmax(acfx):-1]
@@ -62,11 +64,12 @@ def fwhm(acfx,dofit):
     
     xnew = np.linspace(0,max(xdata),num=1000)
 
+    # try to curve fit to the entire data points
     try:
         (popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2])
         #(popt, pcov) = optimization.curve_fit(ACF, xnew, f(xnew), p0=[0.5, 2, 2], bounds=(0,[1,np.inf,np.inf]))
     except RuntimeError:
-        # try again with limited length of the ACF
+        # if failed, try again with limited length of the ACF
         xprime = np.linspace(0,0.20*max(xdata),num=200)
         try:
             (popt, pcov) = optimization.curve_fit(ACF, xprime, f(xprime), p0=[0.5, 2, 2])
@@ -99,7 +102,8 @@ def fwhm(acfx,dofit):
 def save_acf(acfx,filename):
     ## plot ACFs
     # normalize acf to [0,1]
-    acfx = acfx/max(acfx)
+    if max(acfx)>0:
+        acfx = acfx/max(acfx)
     
     # crop the right side only
     acfx = acfx[np.argmax(acfx):-1]
@@ -127,30 +131,34 @@ def save_acf(acfx,filename):
     plt.close() 
 
 def printhelp():
-    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit]')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5>]')
+    print('If --fit used, FWHM will be calculated using the fitted ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
     print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')    
 
-fmri_file=''
+input_file=''
 n_discard=0
+iqrcoef=1.5
 dofit=False
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard=','fit'])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard=','fit','iqrcoef='])
 except getopt.GetoptError:
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('--file'):
-        fmri_file=arg
+        input_file=arg
     elif opt in ('--ndiscard'):
         n_discard=int(arg)
     elif opt in ('--fit'):
         dofit=True
+    elif opt in ('--iqrcoef'):
+        iqrcoef=float(arg)
     elif opt in ('-h','--help'):
         printhelp()
         sys.exit()
         
-if fmri_file=='':
+if input_file=='':
     printhelp()
     sys.exit()
 
@@ -174,9 +182,12 @@ csv_stdFWHMy = open('stdFWHMy.csv', 'a')
 
 csv_teq = open('teq.csv','a')
 
-img_nib=nb.load(fmri_file)
+img_nib=nb.load(input_file)
 img=img_nib.get_data()
 pixdim = img_nib.header.get_zooms()
+
+# now that the file is read, get rid of the path and the extension, and just use the base name to save the results:
+fmri_file = fileutils.namebase(input_file)
 
 sl_fwhmx = np.zeros((img.shape[2],img.shape[3]))
 sl_fwhmy = np.zeros((img.shape[2],img.shape[3]))
@@ -195,7 +206,8 @@ for t in np.arange(img.shape[3]):
         ## plot ACFs
         if t >= n_discard:
             # normalize acf to [0,1]
-            acfx = acfx/max(acfx)
+            if max(acfx)>0:
+                acfx = acfx/max(acfx)
             # crop the right side only
             acfx = acfx[np.argmax(acfx):-1]
             xdata = np.arange(len(acfx))
@@ -225,7 +237,8 @@ for t in np.arange(img.shape[3]):
         ## plot ACFs
         if t >= n_discard:
             # normalize acf to [0,1]
-            acfx = acfx/max(acfx)
+            if max(acfx)>0:
+                acfx = acfx/max(acfx)
             # crop the right side only
             acfx = acfx[np.argmax(acfx):-1]
             xdata = np.arange(len(acfx))
@@ -335,30 +348,33 @@ plt.xlabel('Frame number')
 plt.ylabel('FWHM (mm)')
 plt.savefig(fmri_file+'_FWHMy.png',dpi=600)
 
+np.savetxt(fmri_file+'_FWHMx.csv', sl_fwhmx.transpose(), delimiter=',')
+np.savetxt(fmri_file+'_FWHMy.csv', sl_fwhmy.transpose(), delimiter=',')
+
 # find outliers wrt all slices in the sessions
-outlier_x = sl_fwhmx > np.percentile(sl_fwhmx, 75) + 1.5 * ss.iqr(sl_fwhmx)
-outlier_y = sl_fwhmy > np.percentile(sl_fwhmy, 75) + 1.5 * ss.iqr(sl_fwhmy)
+outlier_x = (sl_fwhmx > np.percentile(sl_fwhmx, 75) + iqrcoef * ss.iqr(sl_fwhmx)) | (sl_fwhmx < np.percentile(sl_fwhmx, 25) - iqrcoef * ss.iqr(sl_fwhmx))
+outlier_y = (sl_fwhmy > np.percentile(sl_fwhmy, 75) + iqrcoef * ss.iqr(sl_fwhmy)) | (sl_fwhmy < np.percentile(sl_fwhmy, 25) - iqrcoef * ss.iqr(sl_fwhmy))
 
 plt.figure(5)
 plt.imshow(outlier_x)
-plt.savefig(fmri_file+'_FWHMx_outliers.png',dpi=600)
+plt.savefig(fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
 
 plt.figure(6)
 plt.imshow(outlier_y)
-plt.savefig(fmri_file+'_FWHMy_outliers.png',dpi=600)
+plt.savefig(fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
 
 # find outliers wrt slices in each volume
-outlier_x = np.zeros(sl_fwhmx.shape)
-outlier_y = np.zeros(sl_fwhmy.shape)
-
-for t in np.arange(sl_fwhmx.shape[1]):
-    outlier_x[:,t] = sl_fwhmx[:,t] > np.percentile(sl_fwhmx[:,t], 75) + 1.5 * ss.iqr(sl_fwhmx[:,t])
-    outlier_y[:,t] = sl_fwhmy[:,t] > np.percentile(sl_fwhmy[:,t], 75) + 1.5 * ss.iqr(sl_fwhmy[:,t])
-    
-plt.figure(7)
-plt.imshow(outlier_x)
-plt.savefig(fmri_file+'_FWHMx_outliers_vol.png',dpi=600)
-
-plt.figure(8)
-plt.imshow(outlier_y)
-plt.savefig(fmri_file+'_FWHMy_outliers_vol.png',dpi=600)
+#outlier_x = np.zeros(sl_fwhmx.shape)
+#outlier_y = np.zeros(sl_fwhmy.shape)
+#
+#for t in np.arange(sl_fwhmx.shape[1]):
+#    outlier_x[:,t] = sl_fwhmx[:,t] > np.percentile(sl_fwhmx[:,t], 75) + iqrcoef * ss.iqr(sl_fwhmx[:,t])
+#    outlier_y[:,t] = sl_fwhmy[:,t] > np.percentile(sl_fwhmy[:,t], 75) + iqrcoef * ss.iqr(sl_fwhmy[:,t])
+#    
+#plt.figure(7)
+#plt.imshow(outlier_x)
+#plt.savefig(fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqr_vol.png',dpi=600)
+#
+#plt.figure(8)
+#plt.imshow(outlier_y)
+#plt.savefig(fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqr_vol.png',dpi=600)
