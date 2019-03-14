@@ -348,15 +348,17 @@ csv_teq.close()
 csv_fwhm.close()
 
 # save figures
+fileutils.createdir('acf')
 plt.figure(12)
-plt.savefig(fmri_file+'_ACFx.png',dpi=600)
+plt.savefig('acf/'+fmri_file+'_ACFx.png',dpi=600)
 plt.figure(13)
-plt.savefig(fmri_file+'_ACFx_fit.png',dpi=600) 
+plt.savefig('acf/'+fmri_file+'_ACFx_fit.png',dpi=600) 
 plt.figure(22)
-plt.savefig(fmri_file+'_ACFy.png',dpi=600)
+plt.savefig('acf/'+fmri_file+'_ACFy.png',dpi=600)
 plt.figure(23)
-plt.savefig(fmri_file+'_ACFy_fit.png',dpi=600) 
+plt.savefig('acf/'+fmri_file+'_ACFy_fit.png',dpi=600) 
 
+fileutils.createdir('fwhm')
 plt.figure(3)
 plt.plot(np.amax(sl_fwhmx,axis=0))
 plt.plot(np.amin(sl_fwhmx,axis=0))
@@ -368,7 +370,7 @@ plt.plot(np.std(sl_fwhmx,axis=0))
 plt.legend(['Max','Min','Med','Q1','Q3','Mean','STD'])
 plt.xlabel('Frame number')
 plt.ylabel('FWHM (mm)')
-plt.savefig(fmri_file+'_FWHMx.png',dpi=600)
+plt.savefig('fwhm/'+fmri_file+'_FWHMx.png',dpi=600)
 
 plt.figure(4)
 plt.plot(np.amax(sl_fwhmy,axis=0))
@@ -381,10 +383,10 @@ plt.plot(np.std(sl_fwhmy,axis=0))
 plt.legend(['Max','Min','Med','Q1','Q3','Mean','STD'])
 plt.xlabel('Frame number')
 plt.ylabel('FWHM (mm)')
-plt.savefig(fmri_file+'_FWHMy.png',dpi=600)
+plt.savefig('fwhm/'+fmri_file+'_FWHMy.png',dpi=600)
 
-np.savetxt(fmri_file+'_FWHMx.csv', sl_fwhmx.transpose(), delimiter=',')
-np.savetxt(fmri_file+'_FWHMy.csv', sl_fwhmy.transpose(), delimiter=',')
+np.savetxt('fwhm/'+fmri_file+'_FWHMx.csv', sl_fwhmx.transpose(), delimiter=',')
+np.savetxt('fwhm/'+fmri_file+'_FWHMy.csv', sl_fwhmy.transpose(), delimiter=',')
 
 # find outliers wrt all slices in the sessions
 outlier_x = (sl_fwhmx > np.percentile(sl_fwhmx, 75) + iqrcoef * ss.iqr(sl_fwhmx)) | (sl_fwhmx < np.percentile(sl_fwhmx, 25) - iqrcoef * ss.iqr(sl_fwhmx))
@@ -392,11 +394,11 @@ outlier_y = (sl_fwhmy > np.percentile(sl_fwhmy, 75) + iqrcoef * ss.iqr(sl_fwhmy)
 
 plt.figure(5)
 plt.imshow(outlier_x)
-plt.savefig(fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
+plt.savefig('fwhm/'+fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
 
 plt.figure(6)
 plt.imshow(outlier_y)
-plt.savefig(fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
+plt.savefig('fwhm/'+fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
 
 # find outliers wrt slices in each volume
 #outlier_x = np.zeros(sl_fwhmx.shape)
