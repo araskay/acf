@@ -131,18 +131,19 @@ def save_acf(acfx,filename):
     plt.close() 
 
 def printhelp():
-    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5>]')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5> --anomalythresh <AnomalyThresh=5>]')
     print('If --fit used, FWHM will be calculated using the fitted ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
     print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')    
 
 input_file=''
 n_discard=0
 iqrcoef=1.5
+anomaly_thresh=5
 dofit=False
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard=','fit','iqrcoef='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',['file=', 'help', 'ndiscard=','fit','iqrcoef=','anomalythresh='])
 except getopt.GetoptError:
     sys.exit()
 for (opt,arg) in opts:
@@ -154,6 +155,8 @@ for (opt,arg) in opts:
         dofit=True
     elif opt in ('--iqrcoef'):
         iqrcoef=float(arg)
+    elif opt in ('--anomalythresh'):
+        anomaly_thresh=float(arg)
     elif opt in ('-h','--help'):
         printhelp()
         sys.exit()
@@ -163,7 +166,8 @@ if input_file=='':
     sys.exit()
 
 errorfile = open('error.txt', 'a')
- 
+
+# the following csv files store data per volume for each session
 csv_maxFWHMx = open('maxFWHMx.csv', 'a')
 csv_minFWHMx = open('minFWHMx.csv', 'a')
 csv_medFWHMx = open('medFWHMx.csv', 'a')
@@ -180,7 +184,12 @@ csv_q3FWHMy = open('q3FWHMy.csv', 'a')
 csv_meanFWHMy = open('meanFWHMy.csv', 'a')
 csv_stdFWHMy = open('stdFWHMy.csv', 'a')
 
+# the following stores teq for each session
 csv_teq = open('teq.csv','a')
+
+# the following stores summary slice FWHM measures for each session
+csv_fwhm = open('acfFWHM.csv','a')
+csv_fwhm.write('session,maxFWHMx,minFWHMx,meanFWHMx,medFWHMx,q1FWHMx,q3FWHMx,stdFWHMx,maxFWHMy,minFWHMy,meanFWHMy,medFWHMy,q1FWHMy,q3FWHMy,stdFWHMy,fracAnomaliesx,fracAnomaliesy\n')
 
 img_nib=nb.load(input_file)
 img=img_nib.get_data()
@@ -292,6 +301,30 @@ csv_stdFWHMy.write(fmri_file+','+','.join(str(x) for x in np.std(sl_fwhmy,axis=0
 
 csv_teq.write(fmri_file+','+str(t_eq)+'\n')
 
+# write summary measures to csv
+csv_fwhm.write(fmri_file)
+# summary measures in the x direction
+csv_fwhm.write(','+str(np.amax(sl_fwhmx)))
+csv_fwhm.write(','+str(np.amin(sl_fwhmx)))
+csv_fwhm.write(','+str(np.mean(sl_fwhmx)))
+csv_fwhm.write(','+str(np.median(sl_fwhmx)))
+csv_fwhm.write(','+str(np.percentile(sl_fwhmx,25)))
+csv_fwhm.write(','+str(np.percentile(sl_fwhmx,75)))
+csv_fwhm.write(','+str(np.std(sl_fwhmx)))
+# summary measures in the y direction
+csv_fwhm.write(','+str(np.amax(sl_fwhmy)))
+csv_fwhm.write(','+str(np.amin(sl_fwhmy)))
+csv_fwhm.write(','+str(np.mean(sl_fwhmy)))
+csv_fwhm.write(','+str(np.median(sl_fwhmy)))
+csv_fwhm.write(','+str(np.percentile(sl_fwhmy,25)))
+csv_fwhm.write(','+str(np.percentile(sl_fwhmy,75)))
+csv_fwhm.write(','+str(np.std(sl_fwhmy)))
+# fraction of anomalies
+csv_fwhm.write(','+str(np.sum(sl_fwhmx>anomaly_thresh*np.amin(sl_fwhmx))/sl_fwhmx.shape[0]/sl_fwhmx.shape[1]))
+csv_fwhm.write(','+str(np.sum(sl_fwhmy>anomaly_thresh*np.amin(sl_fwhmy))/sl_fwhmy.shape[0]/sl_fwhmy.shape[1]))
+
+csv_fwhm.write('\n')
+
 csv_maxFWHMx.close()
 csv_minFWHMx.close()
 csv_medFWHMx.close()
@@ -311,6 +344,8 @@ csv_stdFWHMy.close()
 errorfile.close()
 
 csv_teq.close()
+
+csv_fwhm.close()
 
 # save figures
 plt.figure(12)
