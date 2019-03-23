@@ -7,58 +7,39 @@ Created on Wed May 23 10:18:31 2018
 """
 
 import workflow, getopt, sys, subprocess, fileutils, os
-
-def printhelp():
-    print('Usage: run_acf.py --subjects <subjects file> [acf.py additional arguments as listed below]')
-    p=subprocess.Popen(['acf.py','-h'])
-    p.communicate()
-    print('---------------------------------')
-    print('Additional job scheduler options:')
-    print('--mem <amount in GB = 16>')
-
-ifile=''
+import run_acf_lib
 
 # the getopt libraray somehow "guesses" the arguments- for example if given
 # '--subject' it will automatically produce '--subjects'. This can cause problems
 # later when arguments from sys.argv are passed to pipe.py. The following checks
 # in advance to avoid such problems
 pipe_args = sys.argv[1:]
-for arg in pipe_args:
-    if '--' in arg:
-        if not arg in ['--subjects','--ndiscard', '--help', '--mem','--fit','--iqrcoef']:
-            printhelp()
-            sys.exit()
 
-mem='16'
+if not run_acf_lib.argsvalid(pipe_args):
+    run_acf_lib.printhelp()
+    sys.exit()
 
-# parse command-line arguments
-try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',['help','subjects=', 'ndiscard=','mem=','fit','iqrcoef='])
-except getopt.GetoptError:
+args = run_acf_lib.parseargs(pipe_args)
+
+if args.help or args.error:
+    run_acf_lib.printhelp()
+    sys.exit()
+
+if args.ifile=='':
     printhelp()
     sys.exit()
-for (opt,arg) in opts:
-    if opt in ('-h', '--help'):
-        printhelp()
-        sys.exit()
-    elif opt in ('--subjects'):
-        ifile=arg
 
-    elif opt in ('--mem'):
-        mem=arg
-
-if ifile=='':
-    printhelp()
-    sys.exit()
+# initialize output files, etc.
+run_acf_lib.initialize()
 
 base_command = 'acf.py'
 
 count=0
 
-subjects=workflow.getsubjects(ifile)
+subjects=workflow.getsubjects(args.ifile)
 
 # get input file name to use for naming temporary files
-(directory,filename)=os.path.split(ifile)
+(directory,filename)=os.path.split(args.ifile)
 
 for subj in subjects:
     for session in subj.sessions:
@@ -70,7 +51,7 @@ for subj in subjects:
             # write the header stuff
             qbatch_file.write('#!/bin/bash\n\n')
             qbatch_file.write('#SBATCH -c 1\n')
-            qbatch_file.write('#SBATCH --mem='+mem+'g\n')
+            qbatch_file.write('#SBATCH --mem='+args.mem+'g\n')
             qbatch_file.write('#SBATCH -t 72:0:0\n')
             qbatch_file.write('#SBATCH -o .temp_acf_job_'+filename+str(count)+'.o'+'\n')
             qbatch_file.write('#SBATCH -e .temp_acf_job_'+filename+str(count)+'.e'+'\n\n')

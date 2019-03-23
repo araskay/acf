@@ -189,7 +189,6 @@ csv_teq = open('teq.csv','a')
 
 # the following stores summary slice FWHM measures for each session
 csv_fwhm = open('acfFWHM.csv','a')
-csv_fwhm.write('session,maxFWHMx,minFWHMx,meanFWHMx,medFWHMx,q1FWHMx,q3FWHMx,stdFWHMx,maxFWHMy,minFWHMy,meanFWHMy,medFWHMy,q1FWHMy,q3FWHMy,stdFWHMy,fracAnomaliesx,fracAnomaliesy\n')
 
 img_nib=nb.load(input_file)
 img=img_nib.get_data()
