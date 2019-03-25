@@ -18,6 +18,15 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+def printhelp():
+    print('Calculate the ACF FWHM for all the slices of a fMRI file and save individual FWHM values in the x and y directions as well as summary values to csv files.')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5> --anomalythresh <AnomalyThresh=5>]')
+    print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')
+    print('--ndiscard <n=0>: number of frames at the beginning of the time-series to discard.')
+    print('--fit: flag indicating FWHM to be calculated using the fitted ACF rather than the raw ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
+    print('--iqrcoef <IQRcoef=1.5>: detect slices as outliers if FWHM > IQRcoef x IQR + Q3')
+    print('--anomalythresh <AnomalyThresh=5>: detect slices as anomalous if FWHM > AnomalyThresh x min{FWHM}')
+
 def acf2d(x):
     F = ft.fft2(x)
     acf = ft.fftshift(ft.fft2(abs(F)**2))
@@ -129,11 +138,6 @@ def save_acf(acfx,filename):
     plt.figure(10)
     plt.savefig(filename,dpi=600)
     plt.close() 
-
-def printhelp():
-    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5> --anomalythresh <AnomalyThresh=5>]')
-    print('If --fit used, FWHM will be calculated using the fitted ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
-    print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')    
 
 input_file=''
 n_discard=0
