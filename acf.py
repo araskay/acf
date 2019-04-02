@@ -321,6 +321,10 @@ def main(input_args):
     sl_fwhmx = sl_fwhmx[:,n_discard:]
     sl_fwhmy = sl_fwhmy[:,n_discard:]
 
+    # anomalous slices
+    anom_x = sl_fwhmx>anomaly_thresh*np.amin(sl_fwhmx)
+    anom_y = sl_fwhmy>anomaly_thresh*np.amin(sl_fwhmy)
+
     # write to csv
     csv_maxFWHMx.write(fmri_file+','+','.join(str(x) for x in np.amax(sl_fwhmx,axis=0))+'\n')
     csv_minFWHMx.write(fmri_file+','+','.join(str(x) for x in np.amin(sl_fwhmx,axis=0))+'\n')
@@ -358,9 +362,19 @@ def main(input_args):
     csv_fwhm.write(','+str(np.percentile(sl_fwhmy,25)))
     csv_fwhm.write(','+str(np.percentile(sl_fwhmy,75)))
     csv_fwhm.write(','+str(np.std(sl_fwhmy)))
-    # fraction of anomalies
-    csv_fwhm.write(','+str(np.sum(sl_fwhmx>anomaly_thresh*np.amin(sl_fwhmx))/sl_fwhmx.shape[0]/sl_fwhmx.shape[1]))
-    csv_fwhm.write(','+str(np.sum(sl_fwhmy>anomaly_thresh*np.amin(sl_fwhmy))/sl_fwhmy.shape[0]/sl_fwhmy.shape[1]))
+    
+    # fraction of anomalous slices per session
+    # fracAnomaliesx,fracAnomaliesy
+    csv_fwhm.write(','+str(np.sum(anom_x)/sl_fwhmx.shape[0]/sl_fwhmx.shape[1]))
+    csv_fwhm.write(','+str(np.sum(anom_y)/sl_fwhmy.shape[0]/sl_fwhmy.shape[1]))
+
+    # fraction of anomalous slices per volume
+    # meanAnomalyPerVolx,stdAnomalyPerVolx
+    csv_fwhm.write(','+str(np.mean(np.sum(anom_x,axis=0)/anom_x.shape[0])))
+    csv_fwhm.write(','+str(np.std(np.sum(anom_x,axis=0)/anom_x.shape[0])))
+    # meanAnomalyPerVoly,stdAnomalyPerVoly
+    csv_fwhm.write(','+str(np.mean(np.sum(anom_y,axis=0)/anom_y.shape[0])))
+    csv_fwhm.write(','+str(np.std(np.sum(anom_y,axis=0)/anom_y.shape[0])))
 
     csv_fwhm.write('\n')
 

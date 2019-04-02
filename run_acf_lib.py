@@ -46,7 +46,13 @@ def parseargs(args):
 def initialize():
     # initialize acfFWHM.csv and write the header
     csv_fwhm = open('acfFWHM.csv','w')
-    csv_fwhm.write('sessionID,maxFWHMx,minFWHMx,meanFWHMx,medFWHMx,q1FWHMx,q3FWHMx,stdFWHMx,maxFWHMy,minFWHMy,meanFWHMy,medFWHMy,q1FWHMy,q3FWHMy,stdFWHMy,fracAnomaliesx,fracAnomaliesy\n')
+    csv_fwhm.write('sessionID,'+
+        'maxFWHMx,minFWHMx,meanFWHMx,medFWHMx,q1FWHMx,q3FWHMx,stdFWHMx,'+
+        'maxFWHMy,minFWHMy,meanFWHMy,medFWHMy,q1FWHMy,q3FWHMy,stdFWHMy,'+
+        'fracAnomaliesx,fracAnomaliesy'+
+        'meanAnomalyPerVolx,stdAnomalyPerVolx,'+
+        'meanAnomalyPerVoly,stdAnomalyPerVoly'+
+        '\n')
     csv_fwhm.close()
 
     # initialize other csv files
