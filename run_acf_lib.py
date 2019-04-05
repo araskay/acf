@@ -49,7 +49,7 @@ def initialize():
     csv_fwhm.write('sessionID,'+
         'maxFWHMx,minFWHMx,meanFWHMx,medFWHMx,q1FWHMx,q3FWHMx,stdFWHMx,'+
         'maxFWHMy,minFWHMy,meanFWHMy,medFWHMy,q1FWHMy,q3FWHMy,stdFWHMy,'+
-        'fracAnomaliesx,fracAnomaliesy'+
+        'fracAnomaliesx,fracAnomaliesy,'+
         'meanAnomalyPerVolx,stdAnomalyPerVolx,'+
         'meanAnomalyPerVoly,stdAnomalyPerVoly'+
         '\n')

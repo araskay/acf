@@ -134,7 +134,7 @@ def fwhm(acfx,dofit):
     return (fwhm_pix, popt, error, f)
 
 
-def save_acf(acfx,filename):
+def save_acf(acfx,popt,error,f,filename):
     '''
         save raw, interpolated, and fitted (if available) ACF upon error.
         Input:
@@ -275,7 +275,7 @@ def main(input_args):
             # record errors
             if error != 0:
                 errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMx) \n')
-                save_acf(acfx,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFx.png')
+                save_acf(acfx,popt,error,f,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFx.png')
             
             # calculate FWHMy
             acfx = abs(acf[:,int(sl.shape[1]/2)])
@@ -306,7 +306,7 @@ def main(input_args):
             # record errors
             if error != 0:
                 errorfile.write(fmri_file+'  t='+str(t)+'  z='+str(z)+'  e='+str(error)+'  (FWHMy) \n')
-                save_acf(acfx,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFy.png')  
+                save_acf(acfx,popt,error,f,fmri_file+'_t'+str(t)+'_z'+str(z)+'_e'+str(error)+'_ACFy.png')  
 
 
     # find time to equillibrium
