@@ -368,13 +368,24 @@ def main(input_args):
     csv_fwhm.write(','+str(np.sum(anom_x)/sl_fwhmx.shape[0]/sl_fwhmx.shape[1]))
     csv_fwhm.write(','+str(np.sum(anom_y)/sl_fwhmy.shape[0]/sl_fwhmy.shape[1]))
 
-    # fraction of anomalous slices per volume
+    # number of anomalous slices per volume
     # meanAnomalyPerVolx,stdAnomalyPerVolx
-    csv_fwhm.write(','+str(np.mean(np.sum(anom_x,axis=0)/anom_x.shape[0])))
-    csv_fwhm.write(','+str(np.std(np.sum(anom_x,axis=0)/anom_x.shape[0])))
+    csv_fwhm.write(','+str(np.mean(np.sum(anom_x,axis=0))))
+    csv_fwhm.write(','+str(np.std(np.sum(anom_x,axis=0))))
+
     # meanAnomalyPerVoly,stdAnomalyPerVoly
-    csv_fwhm.write(','+str(np.mean(np.sum(anom_y,axis=0)/anom_y.shape[0])))
-    csv_fwhm.write(','+str(np.std(np.sum(anom_y,axis=0)/anom_y.shape[0])))
+    csv_fwhm.write(','+str(np.mean(np.sum(anom_y,axis=0))))
+    csv_fwhm.write(','+str(np.std(np.sum(anom_y,axis=0))))
+
+    # medAnomalyPerVolx,q1AnomalyPerVolx,q3AnomalyPerVolx
+    csv_fwhm.write(','+str(np.median(np.sum(anom_x,axis=0))))
+    csv_fwhm.write(','+str(np.percentile(np.sum(anom_x,axis=0),25)))
+    csv_fwhm.write(','+str(np.percentile(np.sum(anom_x,axis=0),75)))
+
+    # medAnomalyPerVoly,q1AnomalyPerVoly,q3AnomalyPerVoly
+    csv_fwhm.write(','+str(np.median(np.sum(anom_y,axis=0))))
+    csv_fwhm.write(','+str(np.percentile(np.sum(anom_y,axis=0),25)))
+    csv_fwhm.write(','+str(np.percentile(np.sum(anom_y,axis=0),75)))
 
     csv_fwhm.write('\n')
 
