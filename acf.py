@@ -25,7 +25,7 @@ def printhelp():
     print('--ndiscard <n=0>: number of frames at the beginning of the time-series to discard.')
     print('--fit: flag indicating FWHM to be calculated using the fitted ACF rather than the raw ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
     print('--iqrcoef <IQRcoef=1.5>: detect slices as outliers if FWHM > IQRcoef x IQR + Q3')
-    print('--anomalythresh <AnomalyThresh=5>: detect slices as anomalous if FWHM > AnomalyThresh x min{FWHM}')
+    print('--anomalythresh <AnomalyThresh=10>: detect slices as anomalous if FWHM > AnomalyThresh x min{FWHM}')
 
 def acf2d(x):
     '''
@@ -178,7 +178,7 @@ def main(input_args):
     input_file=''
     n_discard=0
     iqrcoef=1.5
-    anomaly_thresh=5
+    anomaly_thresh=10
     dofit=False
 
     # parse command-line arguments
