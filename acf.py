@@ -386,6 +386,10 @@ def main(input_args):
     csv_fwhm.write(','+str(np.median(np.sum(anom_y,axis=0))))
     csv_fwhm.write(','+str(np.percentile(np.sum(anom_y,axis=0),25)))
     csv_fwhm.write(','+str(np.percentile(np.sum(anom_y,axis=0),75)))
+    
+    # numAnomaly_x, numAnomaly_y
+    csv_fwhm.write(','+str(np.sum(anom_x)))
+    csv_fwhm.write(','+str(np.sum(anom_y)))
 
     csv_fwhm.write('\n')
 

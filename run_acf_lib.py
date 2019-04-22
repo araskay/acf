@@ -53,7 +53,8 @@ def initialize():
         'meanAnomalyPerVolx,stdAnomalyPerVolx,'+
         'meanAnomalyPerVoly,stdAnomalyPerVoly,'+
         'medAnomalyPerVolx,q1AnomalyPerVolx,q3AnomalyPerVolx,'+
-        'medAnomalyPerVoly,q1AnomalyPerVoly,q3AnomalyPerVoly'+
+        'medAnomalyPerVoly,q1AnomalyPerVoly,q3AnomalyPerVoly,'+
+        'numAnomaly_x,numAnomaly_y'+
         '\n')
     csv_fwhm.close()
 
