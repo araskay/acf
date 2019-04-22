@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 def printhelp():
     print('Calculate the ACF FWHM for all the slices of a fMRI file and save individual FWHM values in the x and y directions as well as summary values to csv files.')
-    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5> --anomalythresh <AnomalyThresh=5>]')
+    print('Usage: acf.py --file <file name> [--ndiscard <n=0> --fit --iqrcoef <IQRcoef=1.5> --anomalythresh <AnomalyThresh=10>]')
     print('RUN FROM THE DIRECTORY WHERE YOU WANT TO HAVE THE CSV FIlES SAVED')
     print('--ndiscard <n=0>: number of frames at the beginning of the time-series to discard.')
     print('--fit: flag indicating FWHM to be calculated using the fitted ACF rather than the raw ACF. However, both raw and fitted ACFs are plotted regardless of whether --fit is used or not.')
