@@ -462,11 +462,21 @@ def main(input_args):
 
     plt.figure(5)
     plt.imshow(outlier_x)
-    plt.savefig('fwhm/'+fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
+    plt.savefig('fwhm/'+fmri_file+'_FWHMx_outliers_'+str(iqrcoef)+'iqrcoef.png',dpi=600)
 
     plt.figure(6)
     plt.imshow(outlier_y)
-    plt.savefig('fwhm/'+fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqr.png',dpi=600)
+    plt.savefig('fwhm/'+fmri_file+'_FWHMy_outliers_'+str(iqrcoef)+'iqrcoef.png',dpi=600)
+
+    # save matrix of anomalous slices
+    plt.figure(7)
+    plt.imshow(anom_x)
+    plt.savefig('fwhm/'+fmri_file+'_FWHMx_anomalies_'+str(anomaly_thresh)+'anomaly_thresh.png',dpi=600)
+
+    plt.figure(8)
+    plt.imshow(anom_y)
+    plt.savefig('fwhm/'+fmri_file+'_FWHMy_anomalies_'+str(anomaly_thresh)+'anomaly_thresh.png',dpi=600)
+
 
 
 if __name__ == '__main__':
