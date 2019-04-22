@@ -5,7 +5,7 @@ import pandas as pd
 
 class TestACF(unittest.TestCase):
     def setUp(self):
-        self.mri_file='/home/mkayvanrad/scratch/fbirnqa/detrend/WEU01_PHA_FBN1391_0040_3dDetrend.nii.gz'
+        self.mri_file='/global/home/hpc4343/data/braincode/fbirn/processed/spikecor_slc_detrend/MCM01_PHA_FBN1307_0035_spikecor_3dDetrend.nii.gz'
         self.csv_files = ['maxFWHMx.csv','minFWHMx.csv','medFWHMx.csv','q1FWHMx.csv','q3FWHMx.csv','meanFWHMx.csv','stdFWHMx.csv',
                           'maxFWHMy.csv','minFWHMy.csv','medFWHMy.csv','q1FWHMy.csv','q3FWHMy.csv','meanFWHMy.csv','stdFWHMy.csv',
                           'teq.csv','acfFWHM.csv']
