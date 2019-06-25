@@ -25,5 +25,5 @@ pip install -r requirements.txt
 ## Author
 [Aras Kayvanrad](https://www.linkedin.com/in/kayvanrad/)
 
-
+**Related repos:** [fmri_pipeline](https://github.com/kayvanrad/fmri_pipeline), [fbirnQA](https://github.com/kayvanrad/fbirnQA), [phantomQA](https://github.com/kayvanrad/phantomQA)
 
