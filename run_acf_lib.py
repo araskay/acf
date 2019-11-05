@@ -14,7 +14,7 @@ def printhelp():
 def argsvalid(args):
     for arg in args:
         if '--' in arg:
-            if not arg in ['--subjects','--ndiscard', '--help', '--mem','--fit','--iqrcoef']:
+            if not arg in ['--subjects','--ndiscard', '--help', '--mem','--fit','--iqrcoef', '--anomalythresh']:
                 return(False)
             else:
                 return(True)
@@ -30,7 +30,7 @@ def parseargs(args):
     out=Arguments()
     # parse command-line arguments
     try:
-        (opts,_) = getopt.getopt(args,'h',['help','subjects=', 'ndiscard=','mem=','fit','iqrcoef='])
+        (opts,_) = getopt.getopt(args,'h',['help','subjects=', 'ndiscard=','mem=','fit','iqrcoef=','--anomalythresh'])
     except getopt.GetoptError:
         out.error=True
         return(out)
