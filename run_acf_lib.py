@@ -30,7 +30,7 @@ def parseargs(args):
     out=Arguments()
     # parse command-line arguments
     try:
-        (opts,_) = getopt.getopt(args,'h',['help','subjects=', 'ndiscard=','mem=','fit','iqrcoef=','--anomalythresh'])
+        (opts,_) = getopt.getopt(args,'h',['help','subjects=', 'ndiscard=','mem=','fit','iqrcoef=','anomalythresh='])
     except getopt.GetoptError:
         out.error=True
         return(out)
